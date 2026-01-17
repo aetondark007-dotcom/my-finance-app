@@ -2,22 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LocalFirst Finance — Premium Edition</title>
-  <meta name="description" content="Local-first personal finance with IndexedDB, double-entry accounting, and visual forecasting." />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <title>LocalFirst Finance</title>
+  <meta name="description" content="Secure, offline personal finance app." />
+  <meta name="theme-color" content="#ffffff">
   
-  <!-- External Dependencies -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Libraries -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrAfter.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isBetween.min.js"></script>
-  <!-- PDF Export Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   
@@ -29,54 +30,46 @@
 
   <style>
     :root {
-      /* Base Colors - Light Mode UI Kit */
-      --bg-app: #f8fafc;       /* Slate 50 */
-      --bg-sidebar: #ffffff;   /* White */
-      --bg-card: #ffffff;      /* White */
-      --bg-input: #f1f5f9;     /* Slate 100 */
-      
-      /* Accents */
-      --primary: #4f46e5;      /* Indigo 600 */
-      --primary-hover: #4338ca; /* Indigo 700 */
-      --success: #16a34a;      /* Green 600 */
-      --danger: #dc2626;       /* Red 600 */
-      --warning: #ca8a04;      /* Yellow 600 */
-      --border: #e2e8f0;       /* Slate 200 */
-      
-      /* Text */
-      --text-main: #0f172a;    /* Slate 900 */
-      --text-muted: #64748b;   /* Slate 500 */
-      
-      /* Other */
+      --bg-app: #f8fafc;
+      --bg-sidebar: #ffffff;
+      --bg-card: #ffffff;
+      --bg-input: #f1f5f9;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #ca8a04;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
       --radius: 12px;
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
       --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      --ghost-opacity: 0.6;
+      --nav-height: 0px; /* Calculated dynamically on mobile */
     }
 
-    /* Privacy Mode Blur Class */
+    /* Privacy Mode Blur */
     body.privacy-mode .stat-val, 
-    body.privacy-mode td:nth-child(3), /* Amount columns typically */
+    body.privacy-mode td:nth-child(3), 
     body.privacy-mode .limit-bar-bg {
       filter: blur(6px);
       user-select: none;
-      transition: filter 0.3s ease;
     }
 
-    * { box-sizing: border-box; transition: background-color 0.15s ease, border-color 0.15s ease; outline: none; }
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
     
     body { 
       font-family: var(--font-family);
       margin: 0; 
       background-color: var(--bg-app); 
       color: var(--text-main); 
-      overflow: hidden;
       font-size: 14px;
       line-height: 1.5;
+      overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
     }
 
-    /* Layout Structure */
-    .app-container { display: flex; height: 100vh; }
+    /* --- LAYOUT --- */
+    .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
 
     aside {
       width: 260px;
@@ -86,231 +79,156 @@
       flex-direction: column;
       padding: 1.5rem 1rem;
       flex-shrink: 0;
+      z-index: 20;
+      transition: transform 0.3s ease;
     }
 
     main { 
       flex: 1; 
       overflow-y: auto; 
+      overflow-x: hidden;
       padding: 2rem; 
       background: var(--bg-app);
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
+      padding-bottom: 6rem; /* Space for mobile nav */
     }
 
-    /* Header in Main Content */
+    /* --- HEADER --- */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
       margin-bottom: 1rem;
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--border);
     }
 
-    /* Typography & Branding */
+    /* --- TYPOGRAPHY --- */
     .brand { 
-      font-weight: 700; 
-      font-size: 1.25rem; 
-      color: var(--primary); 
-      margin-bottom: 2rem;
-      padding: 0 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      letter-spacing: -0.02em;
+      font-weight: 800; font-size: 1.25rem; color: var(--primary); 
+      margin-bottom: 2rem; padding: 0 0.5rem; display: flex; align-items: center; gap: 10px;
     }
     .brand::before {
-      content: '';
-      display: block;
-      width: 12px;
-      height: 12px;
-      background: var(--primary);
-      border-radius: 3px;
+      content: ''; display: block; width: 12px; height: 12px; 
+      background: var(--primary); border-radius: 3px;
     }
 
-    h2 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.03em; color: var(--text-main); }
-    h3 { font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem 0; color: var(--text-main); }
-
+    h2 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.03em; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem 0; }
     .muted { color: var(--text-muted); font-size: 0.85rem; }
 
-    /* Navigation */
+    /* --- NAVIGATION --- */
     .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      font-weight: 500;
-      margin-bottom: 4px;
-      border: 1px solid transparent;
-      background: transparent;
-      width: 100%;
-      text-align: left;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.75rem 1rem; border-radius: var(--radius);
+      cursor: pointer; color: var(--text-muted);
+      font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;
+      border: none; background: transparent; width: 100%; text-align: left;
+      transition: all 0.2s;
     }
-
+    .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
     .nav-item:hover { background: var(--bg-app); color: var(--text-main); }
     .nav-item.active { background: #e0e7ff; color: var(--primary); font-weight: 600; }
 
-    /* Components: Cards */
+    /* --- RESPONSIVE MOBILE STYLES --- */
+    @media (max-width: 768px) {
+      .app-container { flex-direction: column; }
+      
+      /* Mobile Bottom Nav */
+      aside {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        width: 100%; height: 60px;
+        flex-direction: row; justify-content: space-around;
+        padding: 0; border-right: none; border-top: 1px solid var(--border);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+      }
+      
+      .brand, .status-container { display: none; } /* Hide Brand & Status in bottom bar */
+      .nav-item {
+        flex-direction: column; gap: 4px; padding: 8px 0;
+        font-size: 10px; justify-content: center;
+        border-radius: 0; margin: 0; flex: 1;
+      }
+      .nav-item svg { width: 22px; height: 22px; }
+      .nav-spacer { display: none; }
+
+      main { padding: 1rem 1rem 5rem 1rem; } /* Add bottom padding for nav */
+      
+      /* Stack Header Items */
+      header { align-items: flex-start; }
+      .month-nav { order: 3; width: 100%; justify-content: space-between; margin-top: 0.5rem; }
+      
+      /* Grid Adjustments */
+      .grid { grid-template-columns: 1fr; gap: 1rem; }
+      
+      /* Modal Mobile */
+      .modal-content { width: 100%; height: 100%; max-height: 100%; border-radius: 0; padding: 1.5rem; }
+      #modal-footer { margin-top: auto; }
+    }
+
+    /* --- COMPONENTS --- */
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-    .card { 
-      background: var(--bg-card); 
-      border: 1px solid var(--border); 
-      border-radius: var(--radius); 
-      padding: 1.5rem; 
-      box-shadow: var(--shadow); 
-    }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
 
-    /* Components: Buttons */
+    /* Buttons */
     .btn {
-      padding: 0 16px;
-      height: 38px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.875rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      white-space: nowrap;
-      transition: all 0.2s;
+      padding: 0 16px; height: 40px; border-radius: 8px; border: 1px solid transparent;
+      cursor: pointer; font-weight: 600; font-size: 0.9rem;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      white-space: nowrap; transition: transform 0.1s;
     }
-    .btn-primary { 
-      background: var(--primary); 
-      color: white; 
-      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-    }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-    
-    .btn-secondary { 
-      background: white; 
-      color: var(--text-main); 
-      border-color: var(--border);
-      box-shadow: var(--shadow);
-    }
-    .btn-secondary:hover { border-color: #cbd5e1; background: #f8fafc; }
-    
-    .btn-danger { 
-      background: #fef2f2; 
-      color: var(--danger); 
-      border-color: #fecaca; 
-    }
-    .btn-danger:hover { background: #fee2e2; }
-    
-    .btn-ghost { background: transparent; color: var(--text-muted); height: 28px; padding: 0 8px; font-size: 0.8rem; font-weight: 500; }
-    .btn-ghost:hover { color: var(--primary); background: #f1f5f9; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
+    .btn-secondary { background: white; color: var(--text-main); border-color: var(--border); box-shadow: var(--shadow); }
+    .btn-danger { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+    .btn-ghost { background: transparent; color: var(--text-muted); height: 32px; padding: 0 10px; font-size: 0.85rem; }
 
-    /* Components: Inputs */
-    input, select, textarea {
-      width: 100%;
-      height: 40px;
-      padding: 0 12px;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-main);
-      font-family: inherit;
-      font-size: 0.9rem;
+    /* Inputs (16px to prevent iOS zoom) */
+    input, select {
+      width: 100%; height: 44px; padding: 0 12px;
+      background: white; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-main);
+      font-size: 16px; 
     }
-    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-    label { display: block; margin-bottom: 6px; color: var(--text-main); font-size: 0.85rem; font-weight: 600; }
+    label { display: block; margin-bottom: 6px; color: var(--text-main); font-size: 0.9rem; font-weight: 600; }
 
-    /* Components: Tables */
-    table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 0.5rem; }
-    th { text-align: left; padding: 12px 16px; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); font-weight: 600; background: #f8fafc; }
-    th:first-child { border-top-left-radius: 8px; }
-    th:last-child { border-top-right-radius: 8px; }
-    td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text-main); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8fafc; }
+    /* Tables (Responsive Wrapper) */
+    .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; } /* Min width forces scroll */
+    th { text-align: left; padding: 12px 16px; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border); background: #f8fafc; position: sticky; top: 0; }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
 
-    /* Components: Badges */
+    /* Badges */
     .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
     .badge-income { background: #dcfce7; color: #15803d; }
     .badge-expense { background: #fee2e2; color: #b91c1c; }
     .badge-ghost { background: #f1f5f9; color: var(--text-muted); border: 1px dashed var(--border); }
 
-    /* Components: Month Nav */
-    .month-nav {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: white;
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-    }
-    .month-nav span { padding: 0 12px; font-weight: 600; font-size: 0.9rem; min-width: 140px; text-align: center; color: var(--text-main); }
+    /* Month Nav */
+    .month-nav { display: flex; align-items: center; gap: 4px; background: white; padding: 4px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .month-nav span { padding: 0 12px; font-weight: 600; font-size: 0.9rem; min-width: 130px; text-align: center; }
 
-    /* Components: Stats */
-    .stat-val { font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem; letter-spacing: -0.03em; color: var(--text-main); }
-
-    /* Components: Progress Bar */
-    .limit-bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; margin-top: 6px; overflow: hidden; width: 100%; max-width: 140px; }
+    /* Progress Bar */
+    .limit-bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; margin-top: 6px; overflow: hidden; width: 100%; }
     .limit-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; }
     .limit-bar-danger { background: var(--danger); }
 
     /* Modals */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal-content {
-      background: var(--bg-card);
-      width: 500px;
-      max-width: 95%;
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: modalSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes modalSlide { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-    .tx-ghost { opacity: 0.7; color: var(--text-muted); }
-    .tx-ghost td { font-style: italic; }
-
-    /* System Status Indicators */
-    .status-item {
-      margin-top: 0.5rem;
-      font-size: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .modal-content { background: var(--bg-card); width: 500px; max-width: 95%; border-radius: 16px; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; max-height: 90vh; }
+    
+    .status-item { margin-top: 0.5rem; font-size: 0.75rem; display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--text-muted); }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; }
     .status-ok { background: var(--success); }
     .status-warn { background: var(--warning); }
-    
-    .privacy-toggle {
-        cursor: pointer;
-        user-select: none;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: background 0.2s;
-    }
-    .privacy-toggle:hover { background: var(--bg-app); color: var(--text-main); }
+    .privacy-toggle { cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+    .privacy-toggle:hover { background: var(--bg-app); }
 
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; border: 3px solid transparent; background-clip: content-box; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .tx-ghost { opacity: 0.7; color: var(--text-muted); } .tx-ghost td { font-style: italic; }
   </style>
 </head>
 <body>
@@ -318,35 +236,38 @@
   <div class="app-container">
     <aside>
       <div class="brand">LocalFirst Finance</div>
+      
       <button class="nav-item active" onclick="switchView('dashboard', this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
         Dashboard
       </button>
       <button class="nav-item" onclick="switchView('accounts', this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
         Accounts
       </button>
       <button class="nav-item" onclick="switchView('transactions', this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
         Transactions
       </button>
       <button class="nav-item" onclick="switchView('recurring', this)">
-        Recurring Rules
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Recurring
       </button>
       <button class="nav-item" onclick="switchView('categories', this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
         Categories
       </button>
       
-      <div style="flex:1"></div>
+      <div class="nav-spacer" style="flex:1"></div>
       
       <button class="nav-item" onclick="switchView('settings', this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         Settings
       </button>
       
-      <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+      <div class="status-container" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
         <div class="status-item privacy-toggle" onclick="togglePrivacy()">
-            <span id="privacy-icon">👁️</span> Privacy Mode: <span id="privacy-state">Off</span>
-        </div>
-        <div class="status-item">
-            <div class="status-dot status-ok"></div>
-            IndexedDB Active
+            <span id="privacy-icon">👁️</span> Privacy: <span id="privacy-state">Off</span>
         </div>
         <div class="status-item" id="backup-status">
             <div class="status-dot status-warn"></div>
@@ -360,11 +281,10 @@
     </main>
   </div>
 
-  <!-- Shared Modal Structure -->
   <div id="modal-overlay" class="modal-overlay">
     <div class="modal-content">
-      <div id="modal-body"></div>
-      <div id="modal-footer" style="display:flex; justify-content: flex-end; gap: 12px; margin-top: 32px;">
+      <div id="modal-body" style="overflow-y:auto; flex:1;"></div>
+      <div id="modal-footer" style="display:flex; justify-content: flex-end; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
         <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
         <button id="modal-submit" class="btn btn-primary">Save Changes</button>
       </div>
@@ -372,23 +292,12 @@
   </div>
 
   <script>
-    // --- UTILITIES: SECURITY & FORMATTING ---
-    // SECURITY FIX: HTML Escaping to prevent XSS
-    function esc(str) {
-      if (str == null) return '';
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
+    // --- UTILITIES ---
+    function esc(str) { if (str == null) return ''; return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
     const uuid = () => 'uid-' + Math.random().toString(36).substr(2, 9);
     const fmt = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
 
-    // --- DATABASE LAYER ---
-    // Update DB Version to 8 to include 'settings' store
+    // --- DATABASE ---
     const DB_NAME = 'LFF_Production_v2';
     const DB_VERSION = 8;
     const STORES = ['accounts', 'transactions', 'recurring', 'categories', 'budgets', 'logs', 'settings'];
@@ -434,9 +343,17 @@
     let viewDate = dayjs().startOf('month'); 
     let privacyMode = false;
 
+    // --- RESIZE LISTENER FOR CHARTS ---
+    window.addEventListener('resize', () => {
+        // Simple debounce to redraw charts on resize
+        if (currentView === 'dashboard') {
+            setTimeout(render, 300);
+        }
+    });
+
     const log = async (msg, meta = {}) => await db.put('logs', { id: uuid(), ts: new Date().toISOString(), msg, meta });
 
-    // --- INDICATORS LOGIC ---
+    // --- UI HELPERS ---
     function togglePrivacy() {
         privacyMode = !privacyMode;
         document.body.classList.toggle('privacy-mode', privacyMode);
@@ -446,34 +363,26 @@
     async function updateBackupStatus() {
         const settings = await db.get('settings', 'backup_meta') || {};
         const el = document.getElementById('backup-status');
+        if(!el) return;
         const dot = el.querySelector('.status-dot');
-        
-        if (!settings.lastBackup) {
-            el.innerHTML = '<div class="status-dot status-warn" style="background:var(--danger)"></div>Backup: Never';
-            return;
-        }
-
+        if (!settings.lastBackup) { el.innerHTML = '<div class="status-dot status-warn" style="background:var(--danger)"></div>Backup: Never'; return; }
         const days = dayjs().diff(dayjs(settings.lastBackup), 'day');
         let color = 'var(--success)';
         let text = `Backup: ${days}d ago`;
-        
         if (days > 7) { color = 'var(--danger)'; text = `Backup: Overdue (${days}d)`; }
         else if (days > 3) { color = 'var(--warning)'; }
         else if (days === 0) { text = 'Backup: Today'; }
-
         el.innerHTML = `<div class="status-dot" style="background:${color}"></div>${text}`;
     }
 
-    // --- ENGINE: DATA MERGING (Ghosts + Real) ---
+    // --- CORE LOGIC ---
     function getRuleOccurrences(rule, targetMonth) {
         const occurrences = [];
         let cursor = dayjs(rule.startDate);
         const startOfMonth = targetMonth.startOf('month');
         const endOfMonth = targetMonth.endOf('month');
         let safety = 0;
-        
         if (cursor.isAfter(endOfMonth)) return [];
-
         while (cursor.isBefore(endOfMonth.add(1, 'day')) && safety < 500) {
             if (cursor.isBetween(startOfMonth, endOfMonth, 'day', '[]')) {
                 occurrences.push({
@@ -482,12 +391,7 @@
                     memo: rule.name,
                     isGhost: true,
                     ruleId: rule.id,
-                    entries: [{
-                        accountId: rule.accountId,
-                        amount: rule.amount,
-                        type: rule.type,
-                        categoryId: rule.categoryId
-                    }]
+                    entries: [{ accountId: rule.accountId, amount: rule.amount, type: rule.type, categoryId: rule.categoryId }]
                 });
             }
             if (rule.frequency === 'weekly') cursor = cursor.add(1, 'week');
@@ -502,57 +406,44 @@
     async function getCombinedTransactions(targetMonth) {
         const txs = await db.getAll('transactions');
         const rules = await db.getAll('recurring');
-        
         let realTxs = txs.filter(t => dayjs(t.date).isSame(targetMonth, 'month'));
         let availableRealTxs = realTxs.map(t => ({...t, _matched: false}));
         let displayList = [...realTxs];
-        
         rules.forEach(rule => {
             const occs = getRuleOccurrences(rule, targetMonth);
             occs.forEach(occ => {
                 const matchIndex = availableRealTxs.findIndex(rt => {
                     if (rt._matched) return false;
-                    
                     if (rt.relatedRuleId && rt.relatedRuleId === rule.id) {
                         const daysDiff = Math.abs(dayjs(rt.date).diff(dayjs(occ.date), 'day'));
                         return daysDiff <= 3; 
                     }
-                    
                     if (!rt.relatedRuleId) {
                         const amountMatch = Math.abs((rt.entries[0]?.amount || 0) - occ.entries[0].amount) < 0.01;
                         const memoMatch = rt.memo === occ.memo;
                         const daysDiff = Math.abs(dayjs(rt.date).diff(dayjs(occ.date), 'day'));
                         return memoMatch && daysDiff <= 3 && amountMatch;
                     }
-                    
                     return false;
                 });
-
-                if (matchIndex !== -1) {
-                    availableRealTxs[matchIndex]._matched = true;
-                } else {
-                    displayList.push(occ);
-                }
+                if (matchIndex !== -1) { availableRealTxs[matchIndex]._matched = true; } 
+                else { displayList.push(occ); }
             });
         });
         return displayList.sort((a,b) => new Date(b.date) - new Date(a.date));
     }
 
-    // --- SEEDING ---
-    async function seedIfEmpty() {
-      // Clean slate - no default data.
-    }
+    async function seedIfEmpty() {}
 
-    // --- VIEW CONTROLLER ---
     async function switchView(view, el) {
       currentView = view;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      el.classList.add('active');
+      if(el) el.classList.add('active');
       await render();
     }
 
     async function render() {
-      await updateBackupStatus(); // Refresh indicator on every render
+      await updateBackupStatus();
       const container = document.getElementById('view-container');
       if (!container) return;
       switch (currentView) {
@@ -573,66 +464,35 @@
     // --- DASHBOARD ---
     async function renderDashboard(c) {
       const accts = await db.getAll('accounts');
-      
       if (accts.length === 0) {
-          c.innerHTML = `
-            <div style="text-align:center; padding: 4rem 1rem;">
-                <h2 style="margin-bottom:1rem">Welcome to LocalFirst Finance</h2>
-                <p class="muted" style="max-width: 400px; margin: 0 auto 2rem;">Your secure, offline financial planner. To get started, please set up your first account.</p>
-                <button onclick="openAccountModal()" class="btn btn-primary" style="height:48px; padding: 0 24px; font-size:1rem;">Create Account</button>
-            </div>
-          `;
+          c.innerHTML = `<div style="text-align:center; padding: 4rem 1rem;"><h2 style="margin-bottom:1rem">Welcome to LocalFirst Finance</h2><p class="muted" style="max-width: 400px; margin: 0 auto 2rem;">Your secure, offline financial planner. To get started, please set up your first account.</p><button onclick="openAccountModal()" class="btn btn-primary" style="height:48px; padding: 0 24px; font-size:1rem;">Create Account</button></div>`;
           return;
       }
-
       const combinedTxs = await getCombinedTransactions(viewDate);
-      
       const netWorth = accts.reduce((s, a) => a.type === 'Credit Card' ? s - a.balance : s + a.balance, 0);
-      
-      const monthlyIncome = combinedTxs.reduce((s, t) => {
-          const main = t.entries[0] || {};
-          return main.type === 'income' ? s + main.amount : s;
-      }, 0);
+      const monthlyIncome = combinedTxs.reduce((s, t) => { const main = t.entries[0] || {}; return main.type === 'income' ? s + main.amount : s; }, 0);
 
       c.innerHTML = `
         <header>
-           <div>
-             <h2>Dashboard</h2>
-             <div class="muted">Overview for ${viewDate.format('MMMM YYYY')}</div>
-           </div>
-           <div class="month-nav">
-              <button onclick="changeViewDate(-1)" class="btn btn-ghost">←</button>
-              <span>${viewDate.format('MMMM YYYY')}</span>
-              <button onclick="changeViewDate(1)" class="btn btn-ghost">→</button>
-           </div>
+           <div><h2>Dashboard</h2><div class="muted">Overview for ${viewDate.format('MMMM YYYY')}</div></div>
+           <div class="month-nav"><button onclick="changeViewDate(-1)" class="btn btn-ghost">←</button><span>${viewDate.format('MMMM YYYY')}</span><button onclick="changeViewDate(1)" class="btn btn-ghost">→</button></div>
         </header>
-
         <div class="grid">
           <div class="card"><div class="muted">Net Worth</div><div class="stat-val">${fmt(netWorth)}</div></div>
           <div class="card"><div class="muted">Total Income (Real + Ghost)</div><div class="stat-val" style="color:var(--success)">${fmt(monthlyIncome)}</div></div>
           <div class="card"><div class="muted">Target Month</div><div class="stat-val">${viewDate.format('MMM YYYY')}</div></div>
         </div>
-
-        <div class="grid" style="margin-top: 1.5rem; grid-template-columns: 2fr 1fr;">
+        <div class="grid" style="margin-top: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
           <div class="card"><h3>Cashflow Flow</h3><div id="chart-sankey"></div></div>
           <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem">
-                <h3 style="margin:0">Recent Activity</h3>
-                <button id="reset-recent" class="btn btn-ghost" style="display:none;" onclick="render()">Clear Filter</button>
-            </div>
-            <table id="recent-tx"></table>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem"><h3 style="margin:0">Recent Activity</h3><button id="reset-recent" class="btn btn-ghost" style="display:none;" onclick="render()">Clear Filter</button></div>
+            <div class="table-wrapper"><table id="recent-tx"></table></div>
           </div>
         </div>
-        
-        <div class="card" style="margin-top: 1.5rem;">
-          <h3>Daily & Forecasted Spend</h3>
-          <div id="chart-heatmap"></div>
-        </div>
+        <div class="card" style="margin-top: 1.5rem;"><h3>Daily & Forecasted Spend</h3><div id="chart-heatmap"></div></div>
       `;
-
       await renderSankey('#chart-sankey', combinedTxs);
       await renderHeatmap('#chart-heatmap', combinedTxs);
-      
       const recentTable = document.getElementById('recent-tx');
       combinedTxs.slice(0, 6).forEach(t => {
         const tr = document.createElement('tr');
@@ -645,283 +505,72 @@
 
     // --- VISUALIZATIONS ---
     async function renderSankey(selector, transactions) {
-        const el = document.querySelector(selector);
-        if(!el) return;
-        el.innerHTML = '';
+        const el = document.querySelector(selector); if(!el) return; el.innerHTML = '';
+        const width = el.clientWidth; const height = 300;
+        const accts = await db.getAll('accounts'); const cats = await db.getAll('categories');
+        const nodes = []; const links = []; const nodeMap = new Map();
+        function getNode(id, type, label) { const key = type + ':' + id; if (!nodeMap.has(key)) { nodes.push({ name: label }); nodeMap.set(key, nodes.length - 1); } return nodeMap.get(key); }
         
-        const width = el.clientWidth;
-        const height = 300;
-        const accts = await db.getAll('accounts');
-        const cats = await db.getAll('categories');
-
-        const nodes = [];
-        const links = [];
-        const nodeMap = new Map();
-
-        // 3-Column Topology Enforcement
-        function getNode(id, type, label) {
-            const key = type + ':' + id;
-            if (!nodeMap.has(key)) {
-                nodes.push({ name: label });
-                nodeMap.set(key, nodes.length - 1);
-            }
-            return nodeMap.get(key);
-        }
-
         transactions.forEach(t => {
-            // Skip transfers
-            const isTransfer = t.entries.length >= 2 && 
-                               t.entries.some(e => e.type === 'income') && 
-                               t.entries.some(e => e.type === 'expense');
-            if (isTransfer) return;
-
+            if (t.entries.length >= 2 && t.entries.some(e => e.type === 'income') && t.entries.some(e => e.type === 'expense')) return;
             t.entries.forEach(entry => {
-                const acc = accts.find(a => a.id === entry.accountId);
-                const cat = cats.find(c => c.id === entry.categoryId);
-                
-                const accId = acc ? acc.id : 'unknown-acc';
-                const accName = acc ? acc.name : 'Unknown';
-                const catId = cat ? cat.id : 'uncat';
-                const catName = cat ? cat.name : 'Uncategorized';
-
-                if (entry.type === 'income') {
-                    const source = getNode(catId, 'cat-in', catName);
-                    const target = getNode(accId, 'acc', accName);
-                    links.push({ source, target, value: entry.amount });
-                } else {
-                    const source = getNode(accId, 'acc', accName);
-                    const target = getNode(catId, 'cat-out', catName);
-                    links.push({ source, target, value: entry.amount });
-                }
+                const acc = accts.find(a => a.id === entry.accountId); const cat = cats.find(c => c.id === entry.categoryId);
+                const accName = acc ? acc.name : 'Unknown'; const catName = cat ? cat.name : 'Uncategorized';
+                if (entry.type === 'income') links.push({ source: getNode(cat ? cat.id : 'uncat', 'cat-in', catName), target: getNode(acc ? acc.id : 'unk', 'acc', accName), value: entry.amount });
+                else links.push({ source: getNode(acc ? acc.id : 'unk', 'acc', accName), target: getNode(cat ? cat.id : 'uncat', 'cat-out', catName), value: entry.amount });
             });
         });
 
-        if (links.length === 0) {
-            el.innerHTML = '<div class="muted" style="padding:2rem; text-align:center">No transaction data for this period</div>';
-            return;
-        }
-
+        if (links.length === 0) { el.innerHTML = '<div class="muted" style="padding:2rem; text-align:center">No transaction data for this period</div>'; return; }
         const svg = d3.select(selector).append('svg').attr('width', width).attr('height', height);
-        const sankey = d3.sankey().nodeWidth(10).nodePadding(12).extent([[1, 1], [width - 1, height - 6]]);
-        
         try {
+            const sankey = d3.sankey().nodeWidth(10).nodePadding(12).extent([[1, 1], [width - 1, height - 6]]);
             const graph = sankey({ nodes: nodes.map(d => ({...d})), links: links.map(d => ({...d})) });
-
-            svg.append('g').selectAll('rect').data(graph.nodes).join('rect')
-                .attr('x', d => d.x0).attr('y', d => d.y0).attr('height', d => Math.max(1, d.y1 - d.y0))
-                .attr('width', d => d.x1 - d.x0).attr('fill', '#4f46e5').attr('opacity', 0.8)
-                .append('title').text(d => `${d.name}\n${fmt(d.value)}`);
-
-            svg.append('g').attr('fill', 'none').selectAll('path').data(graph.links).join('path')
-                .attr('d', d3.sankeyLinkHorizontal()).attr('stroke', '#cbd5e1').attr('stroke-width', d => Math.max(1, d.width))
-                .style('mix-blend-mode', 'multiply').attr('opacity', 0.4)
-                .append('title').text(d => `${d.source.name} → ${d.target.name}\n${fmt(d.value)}`);
-
-            svg.append('g').selectAll('text').data(graph.nodes).join('text')
-                .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6).attr('y', d => (d.y1 + d.y0) / 2)
-                .attr('dy', '0.35em').attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
-                .text(d => d.name).style('fill', '#1e293b').style('font-size', '11px').style('font-weight', '600');
-        } catch (e) {
-            el.innerHTML = '<div class="muted" style="padding:2rem; text-align:center">Insufficient data for flow chart</div>';
-        }
+            svg.append('g').selectAll('rect').data(graph.nodes).join('rect').attr('x', d => d.x0).attr('y', d => d.y0).attr('height', d => Math.max(1, d.y1 - d.y0)).attr('width', d => d.x1 - d.x0).attr('fill', '#4f46e5').attr('opacity', 0.8).append('title').text(d => `${d.name}\n${fmt(d.value)}`);
+            svg.append('g').attr('fill', 'none').selectAll('path').data(graph.links).join('path').attr('d', d3.sankeyLinkHorizontal()).attr('stroke', '#cbd5e1').attr('stroke-width', d => Math.max(1, d.width)).style('mix-blend-mode', 'multiply').attr('opacity', 0.4).append('title').text(d => `${d.source.name} → ${d.target.name}\n${fmt(d.value)}`);
+            svg.append('g').selectAll('text').data(graph.nodes).join('text').attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6).attr('y', d => (d.y1 + d.y0) / 2).attr('dy', '0.35em').attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end').text(d => d.name).style('fill', '#1e293b').style('font-size', '11px').style('font-weight', '600');
+        } catch (e) { el.innerHTML = '<div class="muted" style="padding:2rem; text-align:center">Insufficient data for flow chart</div>'; }
     }
 
     async function renderHeatmap(selector, transactions) {
-        const el = document.querySelector(selector);
-        if(!el) return;
-        el.innerHTML = '';
-        
-        // 1. Process Data: Map date -> { real: number, ghost: number, items: string[] }
+        const el = document.querySelector(selector); if(!el) return; el.innerHTML = '';
         const dailyData = {};
-        
         transactions.forEach(t => {
             const d = dayjs(t.date).format('YYYY-MM-DD');
-            const expenses = t.entries.filter(e => e.type === 'expense');
-            if (expenses.length === 0) return;
-            
+            const expenses = t.entries.filter(e => e.type === 'expense'); if (expenses.length === 0) return;
             const amt = expenses.reduce((s, e) => s + e.amount, 0);
-            
             if (!dailyData[d]) dailyData[d] = { real: 0, ghost: 0, items: [] };
-            
-            if (t.isGhost) dailyData[d].ghost += amt;
-            else dailyData[d].real += amt;
-
-            // Smart Item Collection (Limit to 3 unique items)
-            if (!dailyData[d].items.includes(t.memo)) {
-                if (dailyData[d].items.length < 3) {
-                    dailyData[d].items.push(t.isGhost ? `(F) ${t.memo}` : t.memo);
-                } else if (dailyData[d].items[3] !== '...') {
-                    dailyData[d].items.push('...');
-                }
-            }
+            if (t.isGhost) dailyData[d].ghost += amt; else dailyData[d].real += amt;
+            if (!dailyData[d].items.includes(t.memo)) { if (dailyData[d].items.length < 3) { dailyData[d].items.push(t.isGhost ? `(F) ${t.memo}` : t.memo); } else if (dailyData[d].items[3] !== '...') { dailyData[d].items.push('...'); } }
         });
-
-        // 2. Setup Dimensions
-        const width = el.clientWidth;
-        const cellSize = Math.floor((width - 40) / 7); 
-        const height = cellSize * 7 + 30; 
-        
+        const width = el.clientWidth; const cellSize = Math.floor((width - 40) / 7); const height = cellSize * 7 + 30;
         const svg = d3.select(selector).append('svg').attr('width', width).attr('height', height);
-        
-        // 3. Define Scales
-        // Calculate max intensity based on combined spending to normalize colors
-        const allTotals = Object.values(dailyData).map(d => d.real + d.ghost);
-        const maxSpending = Math.max(...allTotals, 100); 
-        
-        // Red scale for Real spending, Indigo scale for Forecasts
+        const allTotals = Object.values(dailyData).map(d => d.real + d.ghost); const maxSpending = Math.max(...allTotals, 100);
         const colorReal = d3.scaleSequential(d3.interpolateReds).domain([0, maxSpending]);
-        // FIX: Use specific RGB interpolation for Indigo since d3.interpolateIndigo doesn't exist
         const colorGhost = d3.scaleSequential(d3.interpolateRgb("#e0e7ff", "#4f46e5")).domain([0, maxSpending]);
-
-        // 4. Generate Calendar Grid
-        const startOfMonth = viewDate.startOf('month');
-        const endOfMonth = viewDate.endOf('month');
-        const days = d3.timeDays(startOfMonth.toDate(), endOfMonth.add(1, 'day').toDate());
-        const todayStr = dayjs().format('YYYY-MM-DD');
-
-        // Draw Day Labels
-        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((d, i) => {
-            svg.append('text').attr('x', i * cellSize + cellSize/2).attr('y', 15)
-               .attr('text-anchor', 'middle').attr('font-size', '10px').attr('fill', 'var(--text-muted)').text(d);
-        });
-
-        // Draw Cells
-        svg.selectAll('rect').data(days).join('rect')
-            .attr('width', cellSize - 6).attr('height', cellSize - 6).attr('rx', 6)
-            .attr('x', d => d.getDay() * cellSize + 2)
-            .attr('y', d => {
-                const weekIdx = Math.floor((d.getDate() + startOfMonth.day() - 1) / 7);
-                return weekIdx * cellSize + 25;
-            })
-            .attr('fill', d => {
-                const str = dayjs(d).format('YYYY-MM-DD');
-                const data = dailyData[str];
-                
-                if (!data || (data.real === 0 && data.ghost === 0)) return '#f8fafc'; // Empty
-
-                const total = data.real + data.ghost;
-                
-                // Smart Color Logic:
-                // If there is ANY real spending, use Red scale (Real impact takes precedence)
-                // If ONLY ghost spending, use Indigo scale (Prediction)
-                if (data.real > 0) return colorReal(total);
-                return colorGhost(total);
-            })
-            .attr('stroke', d => {
-                const str = dayjs(d).format('YYYY-MM-DD');
-                if (str === todayStr) return 'var(--primary)'; // Highlight Today
-                return '#e2e8f0';
-            })
-            .attr('stroke-width', d => {
-                const str = dayjs(d).format('YYYY-MM-DD');
-                return str === todayStr ? 2 : 1;
-            })
-            .attr('stroke-dasharray', d => {
-                const str = dayjs(d).format('YYYY-MM-DD');
-                const data = dailyData[str];
-                // Smart Alert: Dashed border if date is in PAST, has Forecast, but NO Real spend (Missed/Overdue?)
-                if (data && data.ghost > 0 && data.real === 0 && dayjs(d).isBefore(dayjs(), 'day')) {
-                    return '4 2';
-                }
-                return null;
-            })
-            .attr('cursor', 'pointer')
-            .on('click', (e, d) => {
-                // Interactive Filtering
-                const str = dayjs(d).format('YYYY-MM-DD');
-                
-                // Visual Selection Feedback
-                svg.selectAll('rect').attr('filter', null).attr('stroke-opacity', 1);
-                d3.select(e.currentTarget).attr('stroke', 'var(--text-main)').attr('stroke-width', 2);
-                
-                const dailyTxs = transactions.filter(t => dayjs(t.date).format('YYYY-MM-DD') === str);
-                const table = document.getElementById('recent-tx');
-                const resetBtn = document.getElementById('reset-recent');
-                
-                table.innerHTML = '';
-                resetBtn.style.display = 'block';
-                
-                if (dailyTxs.length === 0) {
-                     table.innerHTML = '<tr><td colspan="3" class="muted" style="padding:1rem; text-align:center">No activity</td></tr>';
-                } else {
-                    dailyTxs.forEach(t => {
-                        const tr = document.createElement('tr');
-                        if (t.isGhost) tr.className = 'tx-ghost';
-                        const mainEntry = t.entries[0] || {amount: 0};
-                        tr.innerHTML = `<td>${dayjs(t.date).format('MMM D')}</td><td>${esc(t.memo)}</td><td style="text-align:right">${fmt(mainEntry.amount)}</td>`;
-                        table.appendChild(tr);
-                    });
-                }
-            })
-            .append('title')
-            .text(d => {
-                const str = dayjs(d).format('YYYY-MM-DD');
-                const entry = dailyData[str];
-                if (!entry) return `${str}`;
-                
-                let tooltip = `${str}`;
-                if (entry.real > 0) tooltip += `\nReal Spend: ${fmt(entry.real)}`;
-                if (entry.ghost > 0) tooltip += `\nForecast: ${fmt(entry.ghost)}`;
-                tooltip += `\n\n${entry.items.join('\n')}`;
-                
-                return tooltip;
-            });
+        const startOfMonth = viewDate.startOf('month'); const endOfMonth = viewDate.endOf('month'); const days = d3.timeDays(startOfMonth.toDate(), endOfMonth.add(1, 'day').toDate()); const todayStr = dayjs().format('YYYY-MM-DD');
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((d, i) => { svg.append('text').attr('x', i * cellSize + cellSize/2).attr('y', 15).attr('text-anchor', 'middle').attr('font-size', '10px').attr('fill', 'var(--text-muted)').text(d); });
+        svg.selectAll('rect').data(days).join('rect').attr('width', cellSize - 6).attr('height', cellSize - 6).attr('rx', 6).attr('x', d => d.getDay() * cellSize + 2).attr('y', d => { const weekIdx = Math.floor((d.getDate() + startOfMonth.day() - 1) / 7); return weekIdx * cellSize + 25; })
+            .attr('fill', d => { const str = dayjs(d).format('YYYY-MM-DD'); const data = dailyData[str]; if (!data || (data.real === 0 && data.ghost === 0)) return '#f8fafc'; const total = data.real + data.ghost; return data.real > 0 ? colorReal(total) : colorGhost(total); })
+            .attr('stroke', d => { const str = dayjs(d).format('YYYY-MM-DD'); return str === todayStr ? 'var(--primary)' : '#e2e8f0'; }).attr('stroke-width', d => { const str = dayjs(d).format('YYYY-MM-DD'); return str === todayStr ? 2 : 1; })
+            .attr('stroke-dasharray', d => { const str = dayjs(d).format('YYYY-MM-DD'); const data = dailyData[str]; if (data && data.ghost > 0 && data.real === 0 && dayjs(d).isBefore(dayjs(), 'day')) return '4 2'; return null; })
+            .attr('cursor', 'pointer').on('click', (e, d) => { const str = dayjs(d).format('YYYY-MM-DD'); svg.selectAll('rect').attr('filter', null).attr('stroke-opacity', 1); d3.select(e.currentTarget).attr('stroke', 'var(--text-main)').attr('stroke-width', 2); const dailyTxs = transactions.filter(t => dayjs(t.date).format('YYYY-MM-DD') === str); const table = document.getElementById('recent-tx'); const resetBtn = document.getElementById('reset-recent'); table.innerHTML = ''; resetBtn.style.display = 'block'; if (dailyTxs.length === 0) { table.innerHTML = '<tr><td colspan="3" class="muted" style="padding:1rem; text-align:center">No activity</td></tr>'; } else { dailyTxs.forEach(t => { const tr = document.createElement('tr'); if (t.isGhost) tr.className = 'tx-ghost'; const mainEntry = t.entries[0] || {amount: 0}; tr.innerHTML = `<td>${dayjs(t.date).format('MMM D')}</td><td>${esc(t.memo)}</td><td style="text-align:right">${fmt(mainEntry.amount)}</td>`; table.appendChild(tr); }); } }).append('title').text(d => { const str = dayjs(d).format('YYYY-MM-DD'); const entry = dailyData[str]; if (!entry) return `${str}`; return `${str}:\nTotal: ${fmt(entry.real + entry.ghost)}\nReal: ${fmt(entry.real)}\nForecast: ${fmt(entry.ghost)}\n\n${entry.items.join('\n')}`; });
     }
 
     // --- TRANSACTIONS ---
     async function renderTransactions(c) {
       const combinedTxs = await getCombinedTransactions(viewDate);
-
       c.innerHTML = `
-        <header>
-          <div>
-            <h2>Transactions</h2>
-            <div class="muted">Ledger for ${viewDate.format('MMMM YYYY')}</div>
-          </div>
-          <div style="display:flex; gap: 0.5rem; align-items: center;">
-            <button onclick="exportTransactionsPDF()" class="btn btn-secondary">PDF Export</button>
-            <div class="month-nav">
-              <button onclick="changeViewDate(-1)" class="btn btn-ghost">←</button>
-              <span>${viewDate.format('MMMM YYYY')}</span>
-              <button onclick="changeViewDate(1)" class="btn btn-ghost">→</button>
-            </div>
-          </div>
+        <header><div><h2>Transactions</h2><div class="muted">Ledger for ${viewDate.format('MMMM YYYY')}</div></div>
+          <div style="display:flex; gap: 0.5rem; align-items: center;"><button onclick="exportTransactionsPDF()" class="btn btn-secondary">PDF Export</button><div class="month-nav"><button onclick="changeViewDate(-1)" class="btn btn-ghost">←</button><span>${viewDate.format('MMMM YYYY')}</span><button onclick="changeViewDate(1)" class="btn btn-ghost">→</button></div></div>
         </header>
-        <div class="card">
-          <table>
-            <thead><tr><th>Date</th><th>Memo</th><th>Impact</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="tx-list"></tbody>
-          </table>
-        </div>
+        <div class="card"><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Memo</th><th>Impact</th><th>Status</th><th>Actions</th></tr></thead><tbody id="tx-list"></tbody></table></div></div>
       `;
-      
       const body = document.getElementById('tx-list');
       combinedTxs.forEach(t => {
-        const tr = document.createElement('tr');
-        if (t.isGhost) tr.className = 'tx-ghost';
-        
-        const mainEntry = t.entries[0] || {amount: 0};
-        const impact = mainEntry.type === 'income' ? `+${fmt(mainEntry.amount)}` : `-${fmt(mainEntry.amount)}`;
-        
-        tr.innerHTML = `
-          <td>${dayjs(t.date).format('YYYY-MM-DD')}</td>
-          <td>${esc(t.memo)}</td>
-          <td style="color:${mainEntry.type === 'income' ? 'var(--success)' : 'var(--danger)'}">${impact}</td>
-          <td>
-            <span class="badge ${t.isGhost ? 'badge-ghost' : (mainEntry.type === 'income' ? 'badge-income' : 'badge-expense')}">
-                ${t.isGhost ? 'Scheduled' : 'Cleared'}
-            </span>
-          </td>
-          <td>
-            <div style="display: flex; gap: 0.5rem;">
-              ${t.isGhost ? 
-                `<button onclick="clearGhost('${t.id}')" class="btn btn-ghost" style="color:var(--success)">Clear Now</button>` : 
-                `<button onclick="openTxModal('${t.id}')" class="btn btn-ghost">Edit</button>
-                 <button onclick="deleteTx('${t.id}')" class="btn btn-ghost btn-danger">Remove</button>`
-              }
-            </div>
-          </td>
-        `;
+        const tr = document.createElement('tr'); if (t.isGhost) tr.className = 'tx-ghost';
+        const mainEntry = t.entries[0] || {amount: 0}; const impact = mainEntry.type === 'income' ? `+${fmt(mainEntry.amount)}` : `-${fmt(mainEntry.amount)}`;
+        tr.innerHTML = `<td>${dayjs(t.date).format('YYYY-MM-DD')}</td><td>${esc(t.memo)}</td><td style="color:${mainEntry.type === 'income' ? 'var(--success)' : 'var(--danger)'}">${impact}</td><td><span class="badge ${t.isGhost ? 'badge-ghost' : (mainEntry.type === 'income' ? 'badge-income' : 'badge-expense')}">${t.isGhost ? 'Scheduled' : 'Cleared'}</span></td><td><div style="display: flex; gap: 0.5rem;">${t.isGhost ? `<button onclick="clearGhost('${t.id}')" class="btn btn-ghost" style="color:var(--success)">Clear Now</button>` : `<button onclick="openTxModal('${t.id}')" class="btn btn-ghost">Edit</button><button onclick="deleteTx('${t.id}')" class="btn btn-ghost btn-danger">Remove</button>`}</div></td>`;
         body.appendChild(tr);
       });
     }
@@ -929,233 +578,73 @@
     async function clearGhost(ghostId) {
         const rules = await db.getAll('recurring');
         let ghostData = null;
-        for (const r of rules) {
-            const occs = getRuleOccurrences(r, viewDate);
-            ghostData = occs.find(o => o.id === ghostId);
-            if (ghostData) break;
-        }
+        for (const r of rules) { const occs = getRuleOccurrences(r, viewDate); ghostData = occs.find(o => o.id === ghostId); if (ghostData) break; }
         if (!ghostData) return;
-
-        const tx = { 
-            id: uuid(), 
-            date: ghostData.date, 
-            memo: ghostData.memo, 
-            entries: ghostData.entries,
-            relatedRuleId: ghostData.ruleId 
-        };
+        const tx = { id: uuid(), date: ghostData.date, memo: ghostData.memo, entries: ghostData.entries, relatedRuleId: ghostData.ruleId };
         await db.put('transactions', tx);
-
         const acc = await db.get('accounts', ghostData.entries[0].accountId);
-        if (acc) {
-            const type = ghostData.entries[0].type;
-            const amt = ghostData.entries[0].amount;
-            if (acc.type === 'Credit Card') acc.balance += (type === 'income' ? -amt : amt);
-            else acc.balance += (type === 'income' ? amt : -amt);
-            await db.put('accounts', acc);
-        }
-        await log('Ghost Realized', tx);
-        await render();
+        if (acc) { const type = ghostData.entries[0].type; const amt = ghostData.entries[0].amount; if (acc.type === 'Credit Card') acc.balance += (type === 'income' ? -amt : amt); else acc.balance += (type === 'income' ? amt : -amt); await db.put('accounts', acc); }
+        await log('Ghost Realized', tx); await render();
     }
 
-    // --- RECURRING MODULE ---
+    // --- RECURRING ---
     async function renderRecurring(c) {
-      const rules = await db.getAll('recurring');
-      const accts = await db.getAll('accounts');
-      c.innerHTML = `
-        <header>
-          <div>
-            <h2>Recurring Rules</h2>
-            <div class="muted">Automated Transactions</div>
-          </div>
-          <button onclick="openRecurringModal()" class="btn btn-primary">Add New Rule</button>
-        </header>
-        <div class="card">
-          <table>
-            <thead><tr><th>Rule Name</th><th>Frequency</th><th>Amount</th><th>Type</th><th>Account</th><th>Actions</th></tr></thead>
-            <tbody id="recurring-list"></tbody>
-          </table>
-        </div>
-      `;
+      const rules = await db.getAll('recurring'); const accts = await db.getAll('accounts');
+      c.innerHTML = `<header><div><h2>Recurring Rules</h2><div class="muted">Automated Transactions</div></div><button onclick="openRecurringModal()" class="btn btn-primary">Add New Rule</button></header><div class="card"><div class="table-wrapper"><table><thead><tr><th>Rule Name</th><th>Frequency</th><th>Amount</th><th>Type</th><th>Account</th><th>Actions</th></tr></thead><tbody id="recurring-list"></tbody></table></div></div>`;
       const body = document.getElementById('recurring-list');
       rules.forEach(r => {
-        const acc = accts.find(a => a.id === r.accountId);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${esc(r.name)}</strong></td>
-          <td>${r.frequency}</td>
-          <td>${fmt(r.amount)}</td>
-          <td><span class="badge ${r.type === 'income' ? 'badge-income' : 'badge-expense'}">${r.type}</span></td>
-          <td>${acc ? esc(acc.name) : 'Unknown'}</td>
-          <td>
-            <button onclick="openRecurringModal('${r.id}')" class="btn btn-ghost">Edit</button>
-            <button onclick="deleteRecurring('${r.id}')" class="btn btn-ghost btn-danger">Delete</button>
-          </td>
-        `;
+        const acc = accts.find(a => a.id === r.accountId); const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>${esc(r.name)}</strong></td><td>${r.frequency}</td><td>${fmt(r.amount)}</td><td><span class="badge ${r.type === 'income' ? 'badge-income' : 'badge-expense'}">${r.type}</span></td><td>${acc ? esc(acc.name) : 'Unknown'}</td><td><button onclick="openRecurringModal('${r.id}')" class="btn btn-ghost">Edit</button><button onclick="deleteRecurring('${r.id}')" class="btn btn-ghost btn-danger">Delete</button></td>`;
         body.appendChild(tr);
       });
     }
 
     async function openRecurringModal(existingId = null) {
-      const accts = await db.getAll('accounts');
-      const cats = await db.getAll('categories');
+      const accts = await db.getAll('accounts'); const cats = await db.getAll('categories');
       let existing = existingId ? await db.get('recurring', existingId) : null;
-
-      const content = `
-        <h3>${existing ? 'Edit' : 'Add'} Recurring Rule</h3>
-        <label>Rule Name</label><input id="mod-rec-name" type="text" value="${existing ? esc(existing.name) : ''}">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;">
-            <div><label>Frequency</label>
-                <select id="mod-rec-freq">
-                    <option value="weekly" ${existing?.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
-                    <option value="biweekly" ${existing?.frequency === 'biweekly' ? 'selected' : ''}>Bi-Weekly</option>
-                    <option value="monthly" ${existing?.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
-                </select>
-            </div>
-            <div><label>Start Date</label><input id="mod-rec-start" type="date" value="${existing ? dayjs(existing.startDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')}"></div>
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;">
-            <div><label>Amount</label><input id="mod-rec-amt" type="number" step="0.01" value="${existing ? existing.amount : 0}"></div>
-            <div><label>Type</label>
-                <select id="mod-rec-type">
-                    <option value="expense" ${existing?.type === 'expense' ? 'selected' : ''}>Expense</option>
-                    <option value="income" ${existing?.type === 'income' ? 'selected' : ''}>Income</option>
-                </select>
-            </div>
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;">
-            <div><label>Account</label>
-                <select id="mod-rec-acc">
-                    ${accts.map(a => `<option value="${a.id}" ${existing?.accountId === a.id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}
-                </select>
-            </div>
-            <div><label>Category</label>
-                <select id="mod-rec-cat">
-                    ${cats.map(c => `<option value="${c.id}" ${existing?.categoryId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-                </select>
-            </div>
-        </div>
-      `;
+      const content = `<h3>${existing ? 'Edit' : 'Add'} Recurring Rule</h3><label>Rule Name</label><input id="mod-rec-name" type="text" value="${existing ? esc(existing.name) : ''}"><div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;"><div><label>Frequency</label><select id="mod-rec-freq"><option value="weekly" ${existing?.frequency === 'weekly' ? 'selected' : ''}>Weekly</option><option value="biweekly" ${existing?.frequency === 'biweekly' ? 'selected' : ''}>Bi-Weekly</option><option value="monthly" ${existing?.frequency === 'monthly' ? 'selected' : ''}>Monthly</option></select></div><div><label>Start Date</label><input id="mod-rec-start" type="date" value="${existing ? dayjs(existing.startDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')}"></div></div><div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;"><div><label>Amount</label><input id="mod-rec-amt" type="number" step="0.01" value="${existing ? existing.amount : 0}"></div><div><label>Type</label><select id="mod-rec-type"><option value="expense" ${existing?.type === 'expense' ? 'selected' : ''}>Expense</option><option value="income" ${existing?.type === 'income' ? 'selected' : ''}>Income</option></select></div></div><div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;"><div><label>Account</label><select id="mod-rec-acc">${accts.map(a => `<option value="${a.id}" ${existing?.accountId === a.id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select></div><div><label>Category</label><select id="mod-rec-cat">${cats.map(c => `<option value="${c.id}" ${existing?.categoryId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div></div>`;
       openModal(content, async () => {
-        const rule = {
-          id: existing ? existing.id : uuid(),
-          name: document.getElementById('mod-rec-name').value,
-          frequency: document.getElementById('mod-rec-freq').value,
-          startDate: document.getElementById('mod-rec-start').value,
-          amount: parseFloat(document.getElementById('mod-rec-amt').value),
-          type: document.getElementById('mod-rec-type').value,
-          accountId: document.getElementById('mod-rec-acc').value,
-          categoryId: document.getElementById('mod-rec-cat').value
-        };
-        if(!rule.name || isNaN(rule.amount)) return alert('Missing data');
-        await db.put('recurring', rule);
-        closeModal();
-        await render();
+        const rule = { id: existing ? existing.id : uuid(), name: document.getElementById('mod-rec-name').value, frequency: document.getElementById('mod-rec-freq').value, startDate: document.getElementById('mod-rec-start').value, amount: parseFloat(document.getElementById('mod-rec-amt').value), type: document.getElementById('mod-rec-type').value, accountId: document.getElementById('mod-rec-acc').value, categoryId: document.getElementById('mod-rec-cat').value };
+        if(!rule.name || isNaN(rule.amount)) return alert('Missing data'); await db.put('recurring', rule); closeModal(); await render();
       });
     }
 
-    // --- ACCOUNTS UI ---
+    // --- ACCOUNTS ---
     async function renderAccounts(c) {
-      const accts = await db.getAll('accounts');
-      const netWorth = accts.reduce((s, a) => a.type === 'Credit Card' ? s - a.balance : s + a.balance, 0);
-
-      c.innerHTML = `
-        <header>
-          <div><h2>Accounts</h2><div class="muted">Total Portfolio: ${fmt(netWorth)}</div></div>
-          <div style="display:flex; gap: 0.5rem;"><button onclick="openTransferModal()" class="btn btn-secondary">Transfer Funds</button><button onclick="openAccountModal()" class="btn btn-primary">Add Account</button></div>
-        </header>
-        <div class="card">
-          <table><thead><tr><th>Name</th><th>Type</th><th>Balance / Limit</th><th>Actions</th></tr></thead><tbody id="acc-list"></tbody></table>
-        </div>
-      `;
+      const accts = await db.getAll('accounts'); const netWorth = accts.reduce((s, a) => a.type === 'Credit Card' ? s - a.balance : s + a.balance, 0);
+      c.innerHTML = `<header><div><h2>Accounts</h2><div class="muted">Total Portfolio: ${fmt(netWorth)}</div></div><div style="display:flex; gap: 0.5rem;"><button onclick="openTransferModal()" class="btn btn-secondary">Transfer Funds</button><button onclick="openAccountModal()" class="btn btn-primary">Add Account</button></div></header><div class="card"><div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Balance / Limit</th><th>Actions</th></tr></thead><tbody id="acc-list"></tbody></table></div></div>`;
       const body = document.getElementById('acc-list');
       accts.forEach(a => {
-        const tr = document.createElement('tr');
-        
-        let info = fmt(a.balance);
-        if (a.type === 'Credit Card') {
-          const limit = a.limit || 0;
-          const utilization = limit > 0 ? (a.balance / limit) * 100 : 0;
-          info = `<div>${fmt(a.balance)} / ${fmt(limit)}</div><div class="limit-bar-bg"><div class="limit-bar-fill ${utilization > 80 ? 'limit-bar-danger' : ''}" style="width: ${Math.min(utilization, 100)}%"></div></div>`;
-        }
-
+        const tr = document.createElement('tr'); let info = fmt(a.balance); if (a.type === 'Credit Card') { const limit = a.limit || 0; const utilization = limit > 0 ? (a.balance / limit) * 100 : 0; info = `<div>${fmt(a.balance)} / ${fmt(limit)}</div><div class="limit-bar-bg"><div class="limit-bar-fill ${utilization > 80 ? 'limit-bar-danger' : ''}" style="width: ${Math.min(utilization, 100)}%"></div></div>`; }
         tr.innerHTML = `<td><strong>${esc(a.name)}</strong></td><td><span class="muted">${a.type}</span></td><td>${info}</td><td><button onclick="openAccountModal('${a.id}')" class="btn btn-ghost">Edit</button><button onclick="deleteAccount('${a.id}')" class="btn btn-ghost btn-danger">Delete</button></td>`;
         body.appendChild(tr);
       });
     }
 
-    // --- CATEGORIES MODULE ---
+    // --- CATEGORIES ---
     async function renderCategories(c) {
       const cats = await db.getAll('categories');
-      c.innerHTML = `
-        <header>
-          <h2>Categories</h2>
-          <button onclick="openCategoryModal()" class="btn btn-primary">Add Category</button>
-        </header>
-        <div class="grid">
-          ${cats.map(cat => `
-            <div class="card">
-              <div style="display:flex; justify-content:space-between; align-items: flex-start;">
-                <div>
-                  <strong>${esc(cat.name)}</strong>
-                  <div style="margin-top:4px"><span class="badge ${cat.type === 'income' ? 'badge-income' : 'badge-expense'}">${cat.type}</span></div>
-                </div>
-                <div style="display:flex; gap: 0.25rem;">
-                   <button onclick="openCategoryModal('${cat.id}')" class="btn btn-ghost" style="padding: 2px 6px;">Edit</button>
-                   <button onclick="deleteCategory('${cat.id}')" class="btn btn-ghost btn-danger" style="padding: 2px 6px;">✕</button>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      c.innerHTML = `<header><h2>Categories</h2><button onclick="openCategoryModal()" class="btn btn-primary">Add Category</button></header><div class="grid">${cats.map(cat => `<div class="card"><div style="display:flex; justify-content:space-between; align-items: flex-start;"><div><strong>${esc(cat.name)}</strong><div style="margin-top:4px"><span class="badge ${cat.type === 'income' ? 'badge-income' : 'badge-expense'}">${cat.type}</span></div></div><div style="display:flex; gap: 0.25rem;"><button onclick="openCategoryModal('${cat.id}')" class="btn btn-ghost" style="padding: 2px 6px;">Edit</button><button onclick="deleteCategory('${cat.id}')" class="btn btn-ghost btn-danger" style="padding: 2px 6px;">✕</button></div></div></div>`).join('')}</div>`;
     }
 
     async function openCategoryModal(existingId = null) {
       let existing = existingId ? await db.get('categories', existingId) : null;
-      const content = `
-        <h3>${existing ? 'Edit' : 'New'} Category</h3>
-        <label>Name</label><input id="cat-name" value="${existing ? esc(existing.name) : ''}">
-        <label>Type</label>
-        <select id="cat-type">
-          <option value="expense" ${existing?.type === 'expense' ? 'selected' : ''}>Expense</option>
-          <option value="income" ${existing?.type === 'income' ? 'selected' : ''}>Income</option>
-        </select>
-      `;
-      openModal(content, async () => {
-        const cat = {
-          id: existing ? existing.id : uuid(),
-          name: document.getElementById('cat-name').value,
-          type: document.getElementById('cat-type').value
-        };
-        if (!cat.name) return alert('Name required');
-        await db.put('categories', cat);
-        closeModal();
-        await render();
-      });
+      const content = `<h3>${existing ? 'Edit' : 'New'} Category</h3><label>Name</label><input id="cat-name" value="${existing ? esc(existing.name) : ''}"><label>Type</label><select id="cat-type"><option value="expense" ${existing?.type === 'expense' ? 'selected' : ''}>Expense</option><option value="income" ${existing?.type === 'income' ? 'selected' : ''}>Income</option></select>`;
+      openModal(content, async () => { const cat = { id: existing ? existing.id : uuid(), name: document.getElementById('cat-name').value, type: document.getElementById('cat-type').value }; if (!cat.name) return alert('Name required'); await db.put('categories', cat); closeModal(); await render(); });
     }
 
-    async function deleteCategory(id) {
-      if (!confirm('Delete this category?')) return;
-      await db.del('categories', id);
-      await render();
-    }
+    async function deleteCategory(id) { if (!confirm('Delete this category?')) return; await db.del('categories', id); await render(); }
 
-    // --- SETTINGS UI ---
+    // --- SETTINGS ---
     async function renderSettings(c) {
-      c.innerHTML = `
-        <header><h2>Settings</h2></header>
-        <div class="card"><h3>Data Management</h3><div style="display:flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem;"><button onclick="exportData()" class="btn btn-secondary">Export Backup (.json)</button><button onclick="document.getElementById('importFile').click()" class="btn btn-secondary">Import Backup</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button onclick="recomputeAllBalances()" class="btn btn-secondary">Repair All Balances</button><button onclick="wipeData()" class="btn btn-danger">Wipe Database</button></div></div>
-        <div class="card" style="margin-top: 1.5rem;"><h3>System Information</h3><div class="muted">App Version: 2.8.3 (Secure)</div></div>
-      `;
+      c.innerHTML = `<header><h2>Settings</h2></header><div class="card"><h3>Data Management</h3><div style="display:flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem;"><button onclick="exportData()" class="btn btn-secondary">Export Backup (.json)</button><button onclick="document.getElementById('importFile').click()" class="btn btn-secondary">Import Backup</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button onclick="recomputeAllBalances()" class="btn btn-secondary">Repair All Balances</button><button onclick="wipeData()" class="btn btn-danger">Wipe Database</button></div></div><div class="card" style="margin-top: 1.5rem;"><h3>System Information</h3><div class="muted">App Version: 3.0.0 (Mobile Ready)</div></div>`;
     }
 
-    // --- MODALS BASE ---
+    // --- SHARED ACTIONS ---
     function openModal(content, onSave) {
       document.getElementById('modal-body').innerHTML = content;
       document.getElementById('modal-overlay').style.display = 'flex';
-      document.getElementById('modal-footer').style.display = 'flex';
       document.getElementById('modal-submit').onclick = onSave;
-      document.getElementById('modal-submit').innerText = "Save Changes";
     }
     
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
@@ -1166,171 +655,65 @@
       openModal(content, async () => {
         const type = document.getElementById('mod-type').value;
         const acc = { id: existing ? existing.id : uuid(), name: document.getElementById('mod-name').value, type: type, balance: parseFloat(document.getElementById('mod-bal').value), limit: type === 'Credit Card' ? parseFloat(document.getElementById('mod-limit').value) : null };
-        await db.put('accounts', acc);
-        closeModal(); await render();
+        await db.put('accounts', acc); closeModal(); await render();
       });
     }
 
     function toggleLimitField() { document.getElementById('limit-field').style.display = (document.getElementById('mod-type').value === 'Credit Card') ? 'block' : 'none'; }
 
     async function openTxModal(existingId = null) {
-      const accts = await db.getAll('accounts');
-      const cats = await db.getAll('categories');
+      const accts = await db.getAll('accounts'); const cats = await db.getAll('categories');
       let existing = existingId ? await db.get('transactions', existingId) : null;
       const main = existing ? existing.entries[0] : null;
-
-      const content = `
-        <h3>${existing ? 'Edit' : 'New'} Transaction</h3>
-        <label>Date</label><input id="tx-date" type="date" value="${existing ? dayjs(existing.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')}">
-        <label>Memo</label><input id="tx-memo" type="text" value="${existing ? esc(existing.memo) : ''}">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div><label>Account</label>
-            <select id="tx-acc">${accts.map(a => `<option value="${a.id}" ${main?.accountId === a.id ? 'selected' : ''}>${esc(a.name)}</option>`)}</select>
-          </div>
-          <div><label>Category</label>
-            <select id="tx-cat">${cats.map(c => `<option value="${c.id}" ${main?.categoryId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`)}</select>
-          </div>
-        </div>
-        <label>Amount</label><input id="tx-amt" type="number" step="0.01" value="${main ? main.amount : ''}">
-        <label>Type</label>
-        <select id="tx-type">
-          <option value="expense" ${main?.type === 'expense' ? 'selected' : ''}>Expense</option>
-          <option value="income" ${main?.type === 'income' ? 'selected' : ''}>Income</option>
-        </select>
-      `;
+      const content = `<h3>${existing ? 'Edit' : 'New'} Transaction</h3><label>Date</label><input id="tx-date" type="date" value="${existing ? dayjs(existing.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')}"><label>Memo</label><input id="tx-memo" type="text" value="${existing ? esc(existing.memo) : ''}"><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;"><div><label>Account</label><select id="tx-acc">${accts.map(a => `<option value="${a.id}" ${main?.accountId === a.id ? 'selected' : ''}>${esc(a.name)}</option>`)}</select></div><div><label>Category</label><select id="tx-cat">${cats.map(c => `<option value="${c.id}" ${main?.categoryId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`)}</select></div></div><label>Amount</label><input id="tx-amt" type="number" step="0.01" value="${main ? main.amount : ''}"><label>Type</label><select id="tx-type"><option value="expense" ${main?.type === 'expense' ? 'selected' : ''}>Expense</option><option value="income" ${main?.type === 'income' ? 'selected' : ''}>Income</option></select>`;
       openModal(content, async () => {
-        const accId = document.getElementById('tx-acc').value;
-        const amt = parseFloat(document.getElementById('tx-amt').value);
-        const type = document.getElementById('tx-type').value;
-
-        if (existing) {
-          const oldAcc = await db.get('accounts', main.accountId);
-          if (oldAcc) {
-            if (oldAcc.type === 'Credit Card') oldAcc.balance -= (main.type === 'income' ? -main.amount : main.amount);
-            else oldAcc.balance -= (main.type === 'income' ? main.amount : -main.amount);
-            await db.put('accounts', oldAcc);
-          }
-        }
-
-        const tx = { 
-          id: existing ? existing.id : uuid(), 
-          date: new Date(document.getElementById('tx-date').value).toISOString(), 
-          memo: document.getElementById('tx-memo').value, 
-          entries: [{ accountId: accId, amount: amt, type: type, categoryId: document.getElementById('tx-cat').value }] 
-        };
+        const accId = document.getElementById('tx-acc').value; const amt = parseFloat(document.getElementById('tx-amt').value); const type = document.getElementById('tx-type').value;
+        if (existing) { const oldAcc = await db.get('accounts', main.accountId); if (oldAcc) { if (oldAcc.type === 'Credit Card') oldAcc.balance -= (main.type === 'income' ? -main.amount : main.amount); else oldAcc.balance -= (main.type === 'income' ? main.amount : -main.amount); await db.put('accounts', oldAcc); } }
+        const tx = { id: existing ? existing.id : uuid(), date: new Date(document.getElementById('tx-date').value).toISOString(), memo: document.getElementById('tx-memo').value, entries: [{ accountId: accId, amount: amt, type: type, categoryId: document.getElementById('tx-cat').value }] };
         await db.put('transactions', tx);
-
-        const acc = await db.get('accounts', accId);
-        if (acc) {
-          if (acc.type === 'Credit Card') acc.balance += (type === 'income' ? -amt : amt);
-          else acc.balance += (type === 'income' ? amt : -amt);
-          await db.put('accounts', acc);
-        }
-
+        const acc = await db.get('accounts', accId); if (acc) { if (acc.type === 'Credit Card') acc.balance += (type === 'income' ? -amt : amt); else acc.balance += (type === 'income' ? amt : -amt); await db.put('accounts', acc); }
         closeModal(); await render();
+      });
+    }
+
+    async function openTransferModal() {
+      const accts = await db.getAll('accounts'); if (accts.length < 2) return alert('At least two accounts required');
+      const content = `<h3>Transfer Funds</h3><label>From</label><select id="tf-from">${accts.map(a => `<option value="${a.id}">${esc(a.name)} (${fmt(a.balance)})</option>`)}</select><label>To</label><select id="tf-to">${accts.map(a => `<option value="${a.id}">${esc(a.name)} (${fmt(a.balance)})</option>`)}</select><label>Amount</label><input id="tf-amt" type="number" step="0.01">`;
+      openModal(content, async () => {
+        const fromId = document.getElementById('tf-from').value; const toId = document.getElementById('tf-to').value; const amt = parseFloat(document.getElementById('tf-amt').value); if(fromId === toId || isNaN(amt)) return alert('Invalid transfer');
+        const fromAcc = await db.get('accounts', fromId); const toAcc = await db.get('accounts', toId);
+        const tx = { id: uuid(), date: new Date().toISOString(), memo: `Transfer: ${fromAcc.name} -> ${toAcc.name}`, entries: [{ accountId: fromId, amount: amt, type: 'expense' }, { accountId: toId, amount: amt, type: 'income' }] };
+        await db.put('transactions', tx);
+        if (fromAcc.type === 'Credit Card') fromAcc.balance += amt; else fromAcc.balance -= amt; if (toAcc.type === 'Credit Card') toAcc.balance -= amt; else toAcc.balance += amt;
+        await db.put('accounts', fromAcc); await db.put('accounts', toAcc); closeModal(); await render();
       });
     }
 
     async function deleteTx(id) {
-      if(!confirm('Delete?')) return;
-      const t = await db.get('transactions', id);
-      const acc = await db.get('accounts', t.entries[0].accountId);
-      if(acc) {
-        const amt = t.entries[0].amount;
-        const type = t.entries[0].type;
-        if (acc.type === 'Credit Card') acc.balance -= (type === 'income' ? -amt : amt);
-        else acc.balance -= (type === 'income' ? amt : -amt);
-        await db.put('accounts', acc);
-      }
-      await db.del('transactions', id);
-      await render();
+      if(!confirm('Delete?')) return; const t = await db.get('transactions', id); const acc = await db.get('accounts', t.entries[0].accountId);
+      if(acc) { const amt = t.entries[0].amount; const type = t.entries[0].type; if (acc.type === 'Credit Card') acc.balance -= (type === 'income' ? -amt : amt); else acc.balance -= (type === 'income' ? amt : -amt); await db.put('accounts', acc); }
+      await db.del('transactions', id); await render();
     }
 
     async function deleteAccount(id) { if(confirm('Delete account?')) { await db.del('accounts', id); await render(); } }
     async function deleteRecurring(id) { if(confirm('Delete rule?')) { await db.del('recurring', id); await render(); } }
-    
     async function recomputeAllBalances() { alert('Balances recomputed'); await render(); }
-    async function wipeData() { if(confirm('Wipe?')) { await db.clear('accounts'); await db.clear('transactions'); await db.clear('recurring'); await db.clear('categories'); location.reload(); } }
+    async function wipeData() { if(confirm('Wipe?')) { for(const s of STORES) await db.clear(s); location.reload(); } }
 
     async function exportTransactionsPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
         const combinedTxs = await getCombinedTransactions(viewDate);
-        const monthLabel = viewDate.format('MMMM YYYY');
-
-        // Title
-        doc.setFontSize(18);
-        doc.setTextColor(40);
-        doc.text(`Financial Report: ${monthLabel}`, 14, 20);
-        
-        // Summary calculations
-        let totalIncome = 0;
-        let totalExpense = 0;
-        
-        const tableBody = combinedTxs.map(t => {
-            const entry = t.entries[0];
-            const amount = entry.amount;
-            if (entry.type === 'income') totalIncome += amount;
-            else totalExpense += amount;
-            
-            return [
-                dayjs(t.date).format('YYYY-MM-DD'),
-                t.memo + (t.isGhost ? ' (Forecast)' : ''),
-                entry.type.toUpperCase(),
-                fmt(amount)
-            ];
-        });
-
-        // Summary Text
-        doc.setFontSize(11);
-        doc.setTextColor(100);
-        doc.text(`Total Income: ${fmt(totalIncome)}`, 14, 30);
-        doc.text(`Total Expenses: ${fmt(totalExpense)}`, 14, 36);
-        doc.text(`Net Cashflow: ${fmt(totalIncome - totalExpense)}`, 14, 42);
-
-        // Table
-        doc.autoTable({
-            startY: 50,
-            head: [['Date', 'Description', 'Type', 'Amount']],
-            body: tableBody,
-            styles: { fontSize: 10, cellPadding: 3 },
-            headStyles: { fillColor: [59, 130, 246] }, // Blue accent
-            alternateRowStyles: { fillColor: [245, 245, 245] }
-        });
-
+        doc.text(`Financial Report - ${viewDate.format('MMMM YYYY')}`, 14, 15);
+        const tableBody = combinedTxs.map(t => { const entry = t.entries[0]; return [dayjs(t.date).format('YYYY-MM-DD'), t.memo + (t.isGhost ? ' (Forecast)' : ''), entry.type.toUpperCase(), fmt(entry.amount)]; });
+        doc.autoTable({ startY: 25, head: [['Date', 'Description', 'Type', 'Amount']], body: tableBody });
         doc.save(`LFF_Report_${viewDate.format('YYYY_MM')}.pdf`);
     }
 
-    async function openTransferModal() {
-      const accts = await db.getAll('accounts');
-      if (accts.length < 2) return alert('At least two accounts required');
-      const content = `<h3>Transfer Funds</h3><label>From</label><select id="tf-from">${accts.map(a => `<option value="${a.id}">${esc(a.name)} (${fmt(a.balance)})</option>`)}</select><label>To</label><select id="tf-to">${accts.map(a => `<option value="${a.id}">${esc(a.name)} (${fmt(a.balance)})</option>`)}</select><label>Amount</label><input id="tf-amt" type="number" step="0.01">`;
-      openModal(content, async () => {
-        const fromId = document.getElementById('tf-from').value;
-        const toId = document.getElementById('tf-to').value;
-        const amt = parseFloat(document.getElementById('tf-amt').value);
-        if(fromId === toId || isNaN(amt)) return alert('Invalid transfer');
-        const fromAcc = await db.get('accounts', fromId);
-        const toAcc = await db.get('accounts', toId);
-        const tx = { id: uuid(), date: new Date().toISOString(), memo: `Transfer: ${fromAcc.name} -> ${toAcc.name}`, entries: [{ accountId: fromId, amount: amt, type: 'expense' }, { accountId: toId, amount: amt, type: 'income' }] };
-        await db.put('transactions', tx);
-        if (fromAcc.type === 'Credit Card') fromAcc.balance += amt; else fromAcc.balance -= amt;
-        if (toAcc.type === 'Credit Card') toAcc.balance -= amt; else toAcc.balance += amt;
-        await db.put('accounts', fromAcc);
-        await db.put('accounts', toAcc);
-        closeModal(); await render();
-      });
-    }
-
     async function exportData() {
-        const all = { accounts: await db.getAll('accounts'), transactions: await db.getAll('transactions'), recurring: await db.getAll('recurring'), categories: await db.getAll('categories') };
-        const blob = new Blob([JSON.stringify(all)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const all = {}; for(const s of STORES) all[s] = await db.getAll(s);
+        const blob = new Blob([JSON.stringify(all)], { type: 'application/json' }); const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'LFF_Backup.json'; a.click();
-        
-        await db.put('settings', { id: 'backup_meta', lastBackup: new Date().toISOString() });
-        await render();
+        await db.put('settings', { id: 'backup_meta', lastBackup: new Date().toISOString() }); await render();
     }
 
     async function importData(e) {
